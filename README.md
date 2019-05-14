@@ -1,1 +1,2 @@
 # databaseMySQL
+This web application, supported by a database backend, will navigate a theoretical art gallery of my own creation. This web application will allow members of the art gallery to access information on a piece of artwork (artist, title, date) along with its physical location within the gallery. Members can also access information on artists and their categorizations (impressionist, realist, classical etc.)
