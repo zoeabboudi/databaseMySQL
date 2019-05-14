@@ -1,3 +1,5 @@
+### This file provides the layout of my database and some sample data featuring my favorite pieces of art. ###
+
 from __future__ import print_function
 from datetime import date, datetime, timedelta
 
