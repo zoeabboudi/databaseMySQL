@@ -16,7 +16,7 @@ form = cgi.FieldStorage()
 title = None
 info = None
 steal = None
-donate_title = 'title of piece'
+donate_title = 'title'
 donate_wing_floor = None
 donate_price = 'price'
 donate_type = 'type of art'
@@ -29,11 +29,23 @@ artist_category = None
 category_name = 'name'
 category_period = 'period'
 category_char = None
+delete_title  = 'title'
+delete_wing = None
+add_wing_title = None
+add_wing_floor = None
 
 if form.getvalue('title'):
     title = form.getvalue('title')
     
-if form.getvalue('donate_title'):
+if form.getvalue('delete_title') :
+    delete_title = form.getvalue('delete_title')
+if form.getvalue('delete_wing'):
+    delete_wing = form.getvalue('delete_wing')
+if form.getvalue('add_wing_title'):
+    add_wing_title =  form.getvalue('add_wing_title')
+if form.getvalue('add_wing_floor'):
+    add_wing_floor =  form.getvalue('add_wing_floor')
+if form.getvalue('donate_title') and  form.getvalue('donate_title')!= 'title':
     donate_title = form.getvalue('donate_title')
 if form.getvalue('donate_wing_floor'):
     donate_wing_floor = form.getvalue('donate_wing_floor')
@@ -188,7 +200,7 @@ print '<font size="4">'
 print '<p><strong>'
 
 print 'Donate a piece of art!<br>'
-print '<input type=text name="donate_title" value= %s %s >' % (donate_title, "")
+print '<input type=text id ="donate_title" name="donate_title" value= %s %s >' % (donate_title, "")
 print '<input type=text name="donate_type" value= %s %s >' % (donate_type, "")
 print '<input type=text name="donate_year_made" value=%s %s>' % (donate_year_made, "")
 print '<input type=text name="donate_artistFN" value = %s %s>' % (donate_artistFN, "")
@@ -205,8 +217,7 @@ print '</strong></p>'
 
 ######## if someone tries to DONATE ##########
 
-if donate_title!=None and donate_title!='title of piece':
-    
+if donate_title!=None and donate_title!='title':
     # check if the artist of the piece is in database
     print '<br> thanks for donating'
     select_artist = ("SELECT artist_id "
@@ -225,10 +236,16 @@ if donate_title!=None and donate_title!='title of piece':
         print '<br>date of death<input type=date name="artist_dod">'
         print '<br> What category does %s %s belong to?' %  (donate_artistFN,donate_artistLN)
         print '<select name="artist_category" value= %s %s>' % (artist_category, "")
-        print '<option value = "Classical">Classical</option>'
-        print '<option value = "Impressionism">Impressionism</option>'
-        print '<option value = "Expressionism">Expressionism</option>'
-        print '<option value = "Fauvism">Fauvism</option>'
+        #display all category options
+        select_category = ("SELECT name "
+                   "FROM category ")
+        cursor.execute(select_category)
+        for row in cursor:
+            cat_name = row[0]
+            print '<option value = %s>%s</option>' % (cat_name, cat_name)
+        #print '<option value = "Impressionism">Impressionism</option>'
+        #print '<option value = "Expressionism">Expressionism</option>'
+        #print '<option value = "Fauvism">Fauvism</option>'
         print '<option value = "other">other</option>'
         print '</select>'
         print '<input type=submit value="ADD ARTIST">'
@@ -316,19 +333,136 @@ if donate_title!=None and donate_title!='title of piece':
         data_location = (num, wing_no)
         cursor.execute(add_location, data_location)
         print '<br> location added!'
-        print '<input type=submit value="DONE">'
+        #document.getElementById("donate_title").value = "title";
+
+print '</fieldset>'
+print '<br>'
+# A way to delete a piece of art
+print '<fieldset style="border: 2px dashed #D5DE17; width: 550px">'
+print '<p>'
+print '<font size="4">'
+print '<strong>STEAL A PIECE OF ART'
+print '<input type=text  name="delete_title" value= %s %s>' % (delete_title, "")
+print '<input type=submit value="Search">'
+print '<br>'
+print '<br> you  want to steal %s %s !' % (delete_title, "")
+if delete_title != None and delete_title != 'title':
+    delete = ("DELETE FROM price "
+              "WHERE price.art_no in (SELECT artwork.art_no "
+              "FROM artwork "
+              "WHERE artwork.title = %s %s)")
+    data_delete = (delete_title, "")
+    cursor.execute(delete, data_delete)
+    print '<br> deleted the price'
+    delete_location = ("DELETE FROM located_in "
+              "WHERE located_in.art_no in (SELECT artwork.art_no "
+              "FROM artwork "
+              "WHERE artwork.title = %s %s)")
+    data_delete = (delete_title, "")
+    cursor.execute(delete_location, data_delete)
+    print 'deleted the location'
+    select_artist = ("SELECT artist_id "
+                     "FROM artwork "
+                     "WHERE title = %s %s")
+    data_delete = (delete_title, "")
+    cursor.execute(select_artist, data_delete)
+    for row in cursor:
+        if row[0]:
+            art_id = str(row[0])
+    print '<br> got the artist_id. it is %s %s' % (art_id, "")
+    delete_artwork = ("DELETE FROM artwork "
+                      "WHERE title = %s %s")
+    print '<br> this is the title %s %s' % (delete_title, "")
+    data_delete = (delete_title, "")
+    cursor.execute(delete_artwork, data_delete)
+    print '<br> ran delete artwork'
+    
+    # see if the artist has made any other painting. If not delete artist from database
+    print '<br> this is art_id again %s %s' % (art_id, "")
+    count_pieces = ("SELECT count(artwork.title) "
+                    "FROM artwork "
+                    "WHERE artist_id = %s %s")
+    data_art_id = (art_id, "")
+   
+    cursor.execute(count_pieces, data_art_id)
+    print '<br> ran this count SQL'
+    for row in cursor:
+        num = row[0]
+    #if the artist has no other pieces
+    print '<br> this is num %s %s' % (num, "")
+    if num ==0:
+        print '<br> this is the artists only painting'
+        delete_artist = ("DELETE FROM artist "
+                         "WHERE artist.artist_id = %s %s")
+        data_delete = (art_id, "")
+        cursor.execute(delete_artwork, data_delete)
+    print '<br> you have stolen %s %s !' % (delete_title, "")
+    
+#delete the price
+#delete the location
+#delete the artwork
+# delete category if its no longer present
+#if the artist has no other artowrk, delete the artist
 
 
+#### to steal or delete a wing 
 
+## delete the located_in
+# insert/update them to the other wing
+## delete wing
+## add a wing. make sure wing option above references updated wing options
+print '</fieldset>'
+print '<br>'
+# A way to delete a piece of art
+print '<fieldset style="border: 2px dashed #D5DE17; width: 550px">'
+print '<p>'
+print '<font size="4">'
+print '<remove a museum wing'
+print '<select name="delete_wing" value= %s %s>' % (delete_wing, "")
+print '<option value =None>none selected</option>'
+#display all category options
+select_wing = ("SELECT title "
+               "FROM museum_wing ")
+cursor.execute(select_wing)
+for row in cursor:
+    wing_name = row[0]
+    print '<option value = %s>%s</option>' % (wing_name, wing_name)
+print '</select>'
+print '<input type=submit value="Search">'
+print '<br>'
+print '<br> you  want to delete %s %s !' % (delete_wing, "")
+if delete_wing != None and delete_wing != 'None': pass         
+        # UPDATE located_in
+    # SET wing_id to NULL
+    # WHERE wing_id in (SELECT wing_id FROM museum_wing WHERE title = %s %s)
+    #data = (delete_wing, "")
 
-            
-        
+print '</fieldset>'
+print '<br>'
+# A way to donate/add  a wing
+print '<fieldset style="border: 2px dashed #D5DE17; width: 550px">'
+print '<p>'
+print '<font size="4">'
+print '<strong> DONATE A WING!'
+print '<br> give your wing a name:'
+print '<input type=text  name="add_wing_title" value= %s %s>' % (add_wing_title, "")
+print '<br> what floor should your wing be on? type in words:'
+print '<input type=text  name="add_wing_floor" value= %s %s>' % (add_wing_floor, "")
+if add_wing_title != None:
+    add_wing = ("INSERT INTO museum_wing"
+                "(title,floor)"
+                 "VALUES ( %s, %s)")
+
+    data_wing1 = (add_wing_floor, add_wing_name)
+    print '<br> your wing has been added!'
+    #cursor.execute(add_wing, data_wing1)
+    
     ## check if artist exists:
     
 ## if the artist exists, then add the artwork, the price and location.
 ## if the artist does not exist, then add the artist to a category
 ## if the category does not exist then add the cateogry
-
+print '</fieldset>'
 print '</fieldset>'
 print '</form>'
 print '</body>'
@@ -341,3 +475,4 @@ cnx.commit()
 
 cursor.close()
 cnx.close()
+
