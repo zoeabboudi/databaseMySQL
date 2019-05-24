@@ -31,14 +31,18 @@ category_period = 'period'
 category_char = None
 delete_title  = 'title'
 delete_wing = None
-add_wing_title = None
-add_wing_floor = None
+add_wing_title = 'nothing'
+add_wing_floor = 'nothing'
+characterizations = None
+
+
 
 if form.getvalue('title'):
     title = form.getvalue('title')
     
 if form.getvalue('delete_title') :
     delete_title = form.getvalue('delete_title')
+    
 if form.getvalue('delete_wing'):
     delete_wing = form.getvalue('delete_wing')
 if form.getvalue('add_wing_title'):
@@ -133,7 +137,12 @@ if info != None:
         information[3] = row[3]
         information[4] = row[4]
 
-
+### get characterizations of member's interests:
+select_char = ("SELECT characterizations FROM category WHERE category.name in (SELECT interested_in.category FROM interested_in WHERE interested_in.memb_id in (SELECT member.memb_id FROM member WHERE member.first_name =%s and member.last_name =%s))")
+data_char = (firstname,lastname)
+cursor.execute(select_char, data_char) #data_char)
+for row in cursor:
+    characterizations = row[0]
 print "Content-type:text/html\r\n\r\n"
 print '<html>'
 
@@ -158,7 +167,9 @@ print '<font size="5">'
 for i in range(len(myList)):
     print '<i>%s</i> by %s %s, created in the year %s' % (myList[i][0],myList[i][1],myList[i][2],myList[i][3])
     print '<br>'
-
+# include characterizations of this member's interest
+print '<font size="4">'
+print '<p> %s %s </p>' % (characterizations, "")
 print '</center>'
 print '<br>'
 print '<fieldset style="border: 2px dashed #D5DE17; width: 550px">'
@@ -207,8 +218,15 @@ print '<input type=text name="donate_artistFN" value = %s %s>' % (donate_artistF
 print '<input type=text name="donate_artistLN" value=%s %s>' % (donate_artistLN,"")
 print '<input type=text name="donate_price" value=%s %s >' % (donate_price, "")
 print '<select name="donate_wing_floor">'
-print '<option value = "Second">Mordechai D. Katz Wing of Classcial Art</option>'
-print '<option value = "Third">Monique C. Katz Wing of 20th Century Art</option>'
+print '<option value =None>none selected</option>'
+#display all wing  options
+select_wing = ("SELECT * "
+               "FROM museum_wing ")
+cursor.execute(select_wing)
+for row in cursor:
+    wing_name = row[1]
+    floor_num = row[2]
+    print '<option value = %s>%s</option>' % (floor_num, wing_name)
 print '</select>'
 print '<input type=submit value="DONATE">'
 
@@ -417,25 +435,41 @@ print '<br>'
 print '<fieldset style="border: 2px dashed #D5DE17; width: 550px">'
 print '<p>'
 print '<font size="4">'
-print '<remove a museum wing'
+print 'remove a museum wing'
 print '<select name="delete_wing" value= %s %s>' % (delete_wing, "")
 print '<option value =None>none selected</option>'
 #display all category options
-select_wing = ("SELECT title "
+select_wing = ("SELECT * "
                "FROM museum_wing ")
 cursor.execute(select_wing)
 for row in cursor:
-    wing_name = row[0]
-    print '<option value = %s>%s</option>' % (wing_name, wing_name)
+    wing_name = row[1]
+    floor_num = row[2]
+    print '<option value = %s>%s</option>' % (floor_num, wing_name)
 print '</select>'
-print '<input type=submit value="Search">'
+print '<input type=submit value="DELTE WING">'
 print '<br>'
 print '<br> you  want to delete %s %s !' % (delete_wing, "")
-if delete_wing != None and delete_wing != 'None': pass         
-        # UPDATE located_in
-    # SET wing_id to NULL
-    # WHERE wing_id in (SELECT wing_id FROM museum_wing WHERE title = %s %s)
+if delete_wing != None and delete_wing != 'None':         
+    #select_located_in = ("SELECT * "
+    ##                     "FROM located_in "
+     #                    "WHERE wing_id in (SELECT wing_id FROM museum_wing WHERE floor = %s %s)")
     #data = (delete_wing, "")
+    #cursor.execute(select_located_in, data)
+    #for row in cursor:
+      #  print'<br> this is locate in %s %s ' % (row[0], "")
+    delete_location_action = ("UPDATE located_in "
+                   "SET wing_id = NULL "
+                   "WHERE wing_id in (SELECT wing_id FROM museum_wing WHERE floor = %s %s)")
+    data = (delete_wing, "")
+    cursor.execute(delete_location_action, data)
+    print '<br> set the appropriate located_ins to null'
+    delete_wing_action = ("DELETE FROM museum_wing "
+                          "WHERE floor = %s %s")
+    data = (delete_wing, "")
+    cursor.execute(delete_wing_action, data)
+    print '<br> wing has been deleted'
+
 
 print '</fieldset>'
 print '<br>'
@@ -448,14 +482,19 @@ print '<br> give your wing a name:'
 print '<input type=text  name="add_wing_title" value= %s %s>' % (add_wing_title, "")
 print '<br> what floor should your wing be on? type in words:'
 print '<input type=text  name="add_wing_floor" value= %s %s>' % (add_wing_floor, "")
-if add_wing_title != None:
+print '<input type=submit value="DONATE">'
+if add_wing_title != 'nothing' and add_wing_title != None and add_wing_title != 'None':
     add_wing = ("INSERT INTO museum_wing"
                 "(title,floor)"
                  "VALUES ( %s, %s)")
 
-    data_wing1 = (add_wing_floor, add_wing_name)
+    data_wing1 = (add_wing_title, add_wing_floor)
     print '<br> your wing has been added!'
-    #cursor.execute(add_wing, data_wing1)
+    print '<br> this is add_wing_title %s %s ' % (add_wing_title, "")
+    cursor.execute(add_wing, data_wing1)
+    print ('<br> wing has been added!')
+
+
     
     ## check if artist exists:
     
@@ -475,4 +514,3 @@ cnx.commit()
 
 cursor.close()
 cnx.close()
-
