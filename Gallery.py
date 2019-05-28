@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-
 #  This is the main script for this web application
-#  It handles CRUD elements and appropriate html for user interaction
+#  It handles CRUD on all entities/relations & appropriate html for user interaction
+
 
 ### cgi script here!
 from datetime import date, datetime, timedelta
@@ -256,12 +256,9 @@ for row in cursor:
     print '<option value = %s>%s</option>' % (floor_num, wing_name)
 print '</select>'
 print '<input type=submit value="DONATE">'
-
-
-
 print '</strong></p>'
 
-######## if someone tries to DONATE ##########
+######## if someone tries to DONATE a piece of art##########
 
 if donate_title!=None and donate_title!='title':
     # check if artwork already in database
@@ -588,6 +585,14 @@ select_artist = ("SELECT first_name, last_name, dob, dod, category "
 cursor.execute(select_artist)
 for row in cursor:
     print '<br> %s %s, %s - %s, %s' % (row[0], row[1], row[2], row[3], row[4])
+
+# delete current member from member list
+print '<input type=submit value="delete member" name ="delete_member">'
+if form.getvalue('delete_member') != None:
+    delete_member = ("DELETE FROM member WHERE first_name = %s and last_name = %s ")
+    data_member = (firstname,lastname)
+    cursor.execute(delete_member, data_member)
+    print '<br> you deleted member!'
 
 
 # close off items  in html
