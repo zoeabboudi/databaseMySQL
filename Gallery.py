@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+
+#  This is the main script for this web application
+#  It handles CRUD elements and appropriate html for user interaction
+
 ### cgi script here!
 from datetime import date, datetime, timedelta
 
@@ -254,7 +258,7 @@ print '</select>'
 print '<input type=submit value="DONATE">'
 
 
-## end form ##
+
 print '</strong></p>'
 
 ######## if someone tries to DONATE ##########
